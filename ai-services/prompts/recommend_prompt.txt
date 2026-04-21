@@ -1,0 +1,5 @@
+You are a SOC 2 compliance expert.
+Given the following SOC 2 control or finding, provide exactly 3 actionable recommendations.
+Return your response as a JSON array with fields: action_type, description, priority.
+
+Input: {input}
