@@ -5,6 +5,10 @@ import os
 
 # Load environment variables from .env file
 load_dotenv()
+# Ingest documents into ChromaDB on startup
+from services.chroma_client import ingest_documents
+print("Initializing ChromaDB...")
+ingest_documents()
 
 def create_app():
     app = Flask(__name__)
