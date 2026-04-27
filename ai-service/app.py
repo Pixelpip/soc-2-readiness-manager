@@ -1,4 +1,11 @@
-from flask import Flask
+from flask import Flask, request
+import logging  
+
+logging.basicConfig(
+    filename="security.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 from middleware.security_middleware import security_middleware
 
 # Step 1: Create app FIRST
@@ -75,4 +82,5 @@ if __name__ == "__main__":
 @app.route("/")
 def home():
     return "Server is working"
+
 
