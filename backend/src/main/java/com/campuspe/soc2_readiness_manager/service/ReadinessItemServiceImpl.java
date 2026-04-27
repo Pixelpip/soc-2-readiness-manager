@@ -1,5 +1,9 @@
 package com.campuspe.soc2_readiness_manager.service;
 
+import static com.campuspe.soc2_readiness_manager.config.CacheConfig.READINESS_ITEM_BY_ID_CACHE;
+import static com.campuspe.soc2_readiness_manager.config.CacheConfig.READINESS_ITEMS_LIST_CACHE;
+import static com.campuspe.soc2_readiness_manager.config.CacheConfig.READINESS_ITEMS_PAGE_CACHE;
+
 import com.campuspe.soc2_readiness_manager.dto.ReadinessItemRequest;
 import com.campuspe.soc2_readiness_manager.entity.ReadinessItem;
 import com.campuspe.soc2_readiness_manager.exception.BusinessValidationException;
@@ -14,6 +18,9 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +42,10 @@ public class ReadinessItemServiceImpl implements ReadinessItemService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = READINESS_ITEMS_PAGE_CACHE, allEntries = true),
+            @CacheEvict(value = READINESS_ITEMS_LIST_CACHE, allEntries = true)
+    })
     public ReadinessItem create(ReadinessItemRequest request) {
         sanitise(request);
         validateBusinessRules(request, null);
@@ -63,6 +74,7 @@ public class ReadinessItemServiceImpl implements ReadinessItemService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = READINESS_ITEM_BY_ID_CACHE, key = "#id")
     public ReadinessItem getById(Long id) {
         return repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ReadinessItem", "id", id));
@@ -70,17 +82,26 @@ public class ReadinessItemServiceImpl implements ReadinessItemService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = READINESS_ITEMS_LIST_CACHE, key = "'all'")
     public List<ReadinessItem> getAll() {
         return repository.findAllByDeletedFalse();
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = READINESS_ITEMS_PAGE_CACHE,
+            key = "#pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()")
     public Page<ReadinessItem> getAll(Pageable pageable) {
         return repository.findAllByDeletedFalse(pageable);
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = READINESS_ITEM_BY_ID_CACHE, key = "#id"),
+            @CacheEvict(value = READINESS_ITEMS_PAGE_CACHE, allEntries = true),
+            @CacheEvict(value = READINESS_ITEMS_LIST_CACHE, allEntries = true)
+    })
     public ReadinessItem update(Long id, ReadinessItemRequest request) {
         ReadinessItem existing = getById(id);
 
@@ -107,6 +128,11 @@ public class ReadinessItemServiceImpl implements ReadinessItemService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = READINESS_ITEM_BY_ID_CACHE, key = "#id"),
+            @CacheEvict(value = READINESS_ITEMS_PAGE_CACHE, allEntries = true),
+            @CacheEvict(value = READINESS_ITEMS_LIST_CACHE, allEntries = true)
+    })
     public void softDelete(Long id) {
         ReadinessItem existing = getById(id);
         existing.setDeleted(true);
